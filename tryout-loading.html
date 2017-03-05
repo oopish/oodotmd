@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Tryout Loading</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ASCII renderer">
+
+  <!-- Usage: `LERT("Some alert message here!")` -->
+  <script>!function(s){var A='addEventListener',L='LERT',S='setAttribute',t=top,
+  w=this,d=document,u=navigator.userAgent,n=0,p,i,c,e=function(m,f,l){if(l!=+l)l
+  =m.lineno,f=m.filename,m=m.message;for(i=0,c=w;c=c[['LIFE','pop','is','ready']
+  [i++]];);(4<i&&w.LIFE.pop.warn||t[L])((f+':'+l).match(/[^\/]+?\/?[^\/]+$/)[0]+
+  '\n'+m)};/efox\/(\d|[1-2]\d)\.|Prest/.test(u)?w.onerror=e:!/SIE 9/.test(u)&&w[
+  A]?w[A]('error',e,0):w.attachEvent('onerror',e);w[L]=t[L]=t[L]||function(h){h=
+  98<++n?'99!':n+' '+h;99<n?0:d.body?(p=d.createElement('TT'),p.innerHTML=h,(p.
+  style[S]?p.style[S]('cssText',s):p[S]('style',s)),p.onclick=function(){d.body.
+  removeChild(this)},d.body.appendChild(p)):alert(h)}}('position:fixed!importa'+
+  'nt;position:absolute;display:block;top:40%;left:5%;width:90%;font-size:14px'+
+  ';padding:9px;margin-left:-9px;background:tan;color:#603;z-index:99')</script>
+
+  <script src="jquery-3.1.1.min.js"></script>
+
+</head>
+<body style="font-family:Arial, sans-serif; background:#ccc; color:#333">
+
+  <h1>Tryout Loading</h1>
+  <pre id="out"></pre>
+  <link id="import" rel="import" src="Hello.oo.md">
+  <script>!function () {
+
+  window.OONS = window.OONS || {} // Oopish Namesapce
+  var geval = eval // `eval()` with global scope
+
+  $.get({
+      url: 'Hello.oo.md'
+    , dataType: 'text'
+    , success: function (data, textStatus, jqXHR) {
+          $('#out').text(data)
+          geval( parseOoDotMd(data) )
+          $('#out').append(
+              "\n<em>Result of window.OONS.Hello.main(['OoDotMd']):</em>\n"
+            + window.OONS.Hello.Main(['OoDotMd!'])
+          )
+      }
+    , error: function (jqXHR, textStatus, errorThrown) {
+          LERT(errorThrown)
+      }
+  })
+
+  //// Retrieves JavaScript code blocks from an ‘oo.md’ file.
+  function parseOoDotMd (text) {
+      var lines = text.split('\n')
+        , js = []
+        , inCodeBlock = false
+        , i, line
+      for (i=0; null != (line = lines[i++]);) {
+               if (  inCodeBlock && '```'   === line) inCodeBlock = false
+          else if (! inCodeBlock && '```js' === line) inCodeBlock = true
+          else if (inCodeBlock) js.push(line)
+      }
+      return js.join('\n')
+  }
+
+  }()</script>
+
+</body>
+</html>
