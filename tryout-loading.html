@@ -37,7 +37,9 @@
     , dataType: 'text'
     , success: function (data, textStatus, jqXHR) {
           $('#out').text(data)
-          geval( parseOoDotMd(data) )
+          const js = parseOoDotMd(data)
+          $('#out').append("\n<em>Parsed JavaScript:</em>\n"+js)
+          geval(js)
           $('#out').append(
               "\n<em>Result of window.OONS.Hello.main(['OoDotMd']):</em>\n"
             + window.OONS.Hello.Main(['OoDotMd!'])
@@ -52,14 +54,27 @@
   function parseOoDotMd (text) {
       var lines = text.split('\n')
         , js = []
-        , inCodeBlock = false
-        , i, line
+        , inBlock = false
+        , i, line, block
       for (i=0; null != (line = lines[i++]);) {
-               if (  inCodeBlock && '```'   === line) inCodeBlock = false
-          else if (! inCodeBlock && '```js' === line) inCodeBlock = true
-          else if (inCodeBlock) js.push(line)
+               if (  inBlock && '```'   === line) inBlock = false
+          else if (! inBlock && '```js' === line) inBlock = true, js.push([])
+          else if (inBlock) js[js.length-1].push(line)
       }
-      return js.join('\n')
+      var eof = [] // end-of-file
+      while ( null != (line = js[0].pop()) ) {
+          if ( /^[ \t}]*$/.test(line) )
+              eof.unshift(line)
+          else {
+              js[0].push(line)
+              break
+          }
+      }
+      js[0] = js[0].join('\n')
+      for (i=1; null != (block = js[i]); i++) {
+          js[i] = '    ' + block.join('\n    ')
+      }
+      return js.join('\n') + '\n' + eof.join('\n')
   }
 
   }()</script>
