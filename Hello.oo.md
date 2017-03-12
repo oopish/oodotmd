@@ -51,7 +51,7 @@ static Main (args) {
 ```
 
 ```cs
-static int Main(string[] args) {
+static int Main (string[] args) {
     var hello = new OONS.Hello(args[0]);
     return hello.Greeting.Length;
 }

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Tryout Loading</title>
+  <title>Live Demo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="An Oopish language experiment">
 
@@ -21,14 +21,97 @@
 
   <script src="jquery-3.1.1.min.js"></script>
 
+  <style type="text/css">
+     h4 {
+         margin: 0;
+     }
+     pre {
+         padding: 1em;
+         margin-top: 0;
+         color: #ccc;
+         overflow: scroll;
+     }
+  </style>
+
 </head>
 <body style="font-family:Arial, sans-serif; background:#ccc; color:#333">
 
-  <h1>Tryout Loading</h1>
-  <pre id="out"></pre>
-  <link id="import" rel="import" src="Hello.oo.md">
+  <!-- Dropdown menu to select JavaScript format -->
+  <select id="ecmaswitch" style="float:right" onchange="document.cookie=
+    'ecmaswitch='+this.options[this.selectedIndex].value;location.reload()">
+    <option value="~0~">ES5 Production</option><!-- default -->
+    <option value="~1~">ES5 Minified</option>
+    <option value="~2~">ES6 Production</option>
+    <option value="~3~">ES6 Development</option>
+  </select><script>!function(d,f,e){if(e=d.getElementById('ecmaswitch'))f=~~
+    d.cookie.split('~')[1],e.options[f].selected=!0}(document)</script>
+
+  <!-- Header and Navigation menu -->
+  <h1 style="display:inline">OoDotMd
+    <span id="version">0.0.*</span> <span id="format"></span>&nbsp;</h1>
+  <div style="float:right">
+    <span id="home">Home</span> &nbsp;
+    <a href="support/index.html">Support</a> &nbsp;
+    <a href="support/test.html">Test</a> &nbsp;
+    <a href="https://github.com/oopish/oodotmd">GitHub</a> &nbsp;&nbsp;
+  </div>
+
+  <h2 style="margin-top:0.2em">Live Demo</h2>
+
+  <div id="oodotmd-in"
+       style="width:45%; float:left;">
+      <h4>OoDotMd in<span id="src"></span></h4>
+      <pre style="height:40em; background:#333"
+           contenteditable="true"
+      >Start typing oo.md here</pre>
+  </div>
+  <div id="js-out"
+       style="width:45%; float:right;">
+      <h4>JavaScript out</h4>
+      <pre style="height:10em; background:#433"
+      >Parsing, please wait...</pre>
+  </div>
+  <div id="cs-out"
+       style="width:45%; float:right;">
+      <h4>C# out</h4>
+      <pre style="height:10em; background:#344"
+      >Parsing, please wait...</pre>
+  </div>
+  <div id="doc-out"
+       style="width:45%; float:right;">
+      <h4>Documentation out</h4>
+      <pre style="height:10em; background:#eee; color:#333"
+      >Parsing, please wait...</pre>
+  </div>
+  <!-- <link id="import" rel="import" src="Hello.oo.md"> -->
+
+
+
   <script>!function () {
 
+//// Handy jQuery refs.
+const
+    $in  = $('#oodotmd-in pre')
+  , $js  = $('#js-out pre')
+  , $cs  = $('#cs-out pre')
+  , $doc = $('#doc-out pre')
+
+//// Define a function which runs the OoDotMd input element through the parser.
+const onInput = () => {
+    const parsed = parseOoDotMd( $in.text() )
+    $js.text(parsed.js)
+    $cs.text(parsed.cs)
+    $doc.text(parsed.doc)
+}
+
+//// Load a basic example into the OoDotMd input element.
+$in.text( getBasicExample() )
+onInput()
+
+//// Listen for changes to the OoDotMd input element.
+$in.on('input', onInput)
+
+/*
   window.OONS = window.OONS || {} // Oopish Namesapce
   var geval = eval // `eval()` with global scope
 
@@ -49,9 +132,16 @@
           LERT(errorThrown)
       }
   })
+*/
 
   //// Retrieves YAML, JavaScript and C# code blocks from an ‘oo.md’ file.
   function parseOoDotMd (text) {
+
+    //   return {
+    //       js:  'Parsed JS from ' + text.length + ' characters'
+    //     , cs:  'Parsed C# from ' + text.length + ' characters'
+    //     , doc: 'Parsed documentation from ' + text.length + ' characters'
+    //   }
 
       ////
       var lines = text.split('\n')
@@ -116,10 +206,11 @@
       for (i=0; null != (block = cs[i]); i++) {
           cs[i] = '    ' + block.join('\n    ')
       }
-      return js.join('\n') + '\n'
-        //    + yaml.join('\n') + '\n'
-        //    + cs.join('\n') + '\n'
-           + eof.join('\n')
+      return {
+          js:  js.join('\n') + '\n' + eof.join('\n')
+        , cs:  cs.join('\n')
+        , doc: '@TODO: HTML-formatted documentation should go in here'
+      }
   }
 
 
@@ -150,6 +241,91 @@
   function singleEofInsert (line, jsClass) { // very rudimentry!
       var match = line.match(/^\s*::([_a-z][0-9a-z]+\s*):(\s*)(.*)(\s+#\s+.*)/i)
       return match ? jsClass + '.' + match[1] + match[2] + '= ' + match[3] : null
+  }
+
+  function getBasicExample () {
+      return `Defining Properties in OoDotMd
+==============================
+
+In this demonstration, properties are defined in three ways:
+- __Oopish:__ which will be converted and output to the .js _and_ .cs files
+- __For JavaScript only:__ which will only be output to the .js file
+- __For C# only:__ which will only be output to the .cs file
+
+
+As with all oo.md files, we must first declare \`OONS\` (the Oopish namespace) and
+this file’s class.
+
+\`\`\`js
+this.OONS = this.OONS || {} // the Oopish namespace
+this.OONS.PropertiesExample = class {
+}
+\`\`\`
+
+\`\`\`cs
+using System;
+namespace OONS {
+  class PropertiesExample {
+  }
+}
+\`\`\`
+
+
+Naming conventions are taken seriously in OoDotMd! They differ slightly from
+[C# coding practice](http://www.dofactory.com/reference/csharp-coding-standards)
+
+
+\`\`\`yaml
+
+fullName: 'Jo Doe' # camel-case, lowercase-first (becomes \`FullName\` in C#)
+_isHappy: true     # underscore, so this is private (stays \`_isHappy\` in C#)
+
+EYES:     'hazel'  # all uppercase, so this is a constant
+_AGE:     33       # underscore, a private constant
+
+::city:   'Paris'  # double-colon for a static property
+::RATE:   12.0     # a static constant
+
+\`\`\`
+
+
+
+JavaScript properties don’t need to be defined in the same block as the
+\`constructor()\` method.
+
+\`\`\`js
+constructor (config) {
+  console.log(this.fullName + ' is ' + this._AGE)
+}
+\`\`\`
+
+\`\`\`cs
+public string Greeting;
+public Hello (string name) {
+  Greeting = "Hello " + name;
+  Console.WriteLine(Greeting);
+}
+\`\`\`
+
+
+Finally, define the \`Main()\` method. This is a convention from C# which we carry
+over into JavaScript. \`Main()\` can return a ‘status’ integer.
+
+\`\`\`js
+static Main (args) {
+  var propsExample = new OONS.PropertiesExample(args[0])
+  return 0
+}
+\`\`\`
+
+\`\`\`cs
+static int Main (string[] args) {
+  var hello = new OONS.Hello(args[0]);
+  return hello.Greeting.Length;
+}
+\`\`\`
+
+`
   }
 
   }()</script>
