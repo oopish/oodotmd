@@ -22,6 +22,12 @@
   <script src="jquery-3.1.1.min.js"></script>
 
   <style type="text/css">
+     html {
+         font-size: 62.5%;
+     }
+     body {
+         font-size: 1.5em;
+     }
      h4 {
          margin: 0;
      }
@@ -59,28 +65,28 @@
   <h2 style="margin-top:0.2em">Live Demo</h2>
 
   <div id="oodotmd-in"
-       style="width:45%; float:left;">
+       style="width:48%; float:left;">
       <h4>OoDotMd in<span id="src"></span></h4>
       <pre style="height:40em; background:#333"
            contenteditable="true"
       >Start typing oo.md here</pre>
   </div>
   <div id="js-out"
-       style="width:45%; float:right;">
-      <h4>JavaScript out</h4>
-      <pre style="height:10em; background:#433"
+       style="width:48%; float:right;">
+      <h4>JavaScript out &nbsp; <a id="js-run" href="#">Run</a></h4>
+      <pre style="height:14em; background:#334"
       >Parsing, please wait...</pre>
   </div>
   <div id="cs-out"
-       style="width:45%; float:right;">
+       style="width:48%; float:right;">
       <h4>C# out</h4>
-      <pre style="height:10em; background:#344"
+      <pre style="height:14em; background:#344"
       >Parsing, please wait...</pre>
   </div>
   <div id="doc-out"
-       style="width:45%; float:right;">
+       style="width:48%; float:right;">
       <h4>Documentation out</h4>
-      <pre style="height:10em; background:#eee; color:#333"
+      <pre style="height:3em; background:#eee; color:#333"
       >Parsing, please wait...</pre>
   </div>
   <!-- <link id="import" rel="import" src="Hello.oo.md"> -->
@@ -90,15 +96,16 @@
   <script>!function () {
 
 //// Handy jQuery refs.
-const
+var
     $in  = $('#oodotmd-in pre')
   , $js  = $('#js-out pre')
+  , $run = $('#js-run')
   , $cs  = $('#cs-out pre')
   , $doc = $('#doc-out pre')
 
 //// Define a function which runs the OoDotMd input element through the parser.
-const onInput = () => {
-    const parsed = parseOoDotMd( $in.text() )
+var onInput = () => {
+    var parsed = parseOoDotMd( $in.text() )
     $js.text(parsed.js)
     $cs.text(parsed.cs)
     $doc.text(parsed.doc)
@@ -111,9 +118,19 @@ onInput()
 //// Listen for changes to the OoDotMd input element.
 $in.on('input', onInput)
 
+//// Run JavaScript when the button is clicked.
+window.OONS = window.OONS || {} // Oopish Namesapce
+var geval = eval // `eval()` with global scope
+  , jsClass, csClass
+$run.click( function () {
+    geval( $js.text() )
+    alert(
+        'Result of ' + jsClass + '.main(["OoDotMd"]):\n'
+      + geval(jsClass + '.main(["OoDotMd"])')
+    )
+})
 /*
   window.OONS = window.OONS || {} // Oopish Namesapce
-  var geval = eval // `eval()` with global scope
 
   $.get({
       url: 'PropertiesExample.oo.md'
@@ -137,19 +154,13 @@ $in.on('input', onInput)
   //// Retrieves YAML, JavaScript and C# code blocks from an ‘oo.md’ file.
   function parseOoDotMd (text) {
 
-    //   return {
-    //       js:  'Parsed JS from ' + text.length + ' characters'
-    //     , cs:  'Parsed C# from ' + text.length + ' characters'
-    //     , doc: 'Parsed documentation from ' + text.length + ' characters'
-    //   }
-
       ////
       var lines = text.split('\n')
         , yaml = []
         , js = []
         , cs = []
         , block = false
-        , i=0, j, line, block, jsClass
+        , i=0, j, line, block, jsEof, csEof, rx
 
       //// Fill the `yaml`, `js` and `cs` arrays with blocks of code.
       while ( null != (line = lines[i++]) ) {
@@ -161,6 +172,10 @@ $in.on('input', onInput)
           else if (block) block[block.length-1].push(line)
       }
 
+
+
+
+      //// JAVASCRIPT
 
       //// Get the JavaScipt `class` name.
       !function () {
@@ -183,19 +198,61 @@ $in.on('input', onInput)
       //// Insert YAML-defined properties into the JavaScript `constructor()`.
       js[i] = js[i].slice(0,j+1).concat( consInserts(yaml), js[i].slice(j+1 ) )
 
-      //// Move the closing `}`s of the first JavaScript block into `eof`.
-      var eof = [] // end-of-file
+      //// Move the closing `}`s of the first JavaScript block into `jsEof`.
+      jsEof = [] // end-of-file
       while ( null != (line = js[0].pop()) ) {
           if ( /^[ \t}]*$/.test(line) )
-              eof.unshift(line)
+              jsEof.unshift(line)
           else {
               js[0].push(line)
               break
           }
       }
-      eof = eof.concat( eofInserts(yaml, jsClass) )
+      jsEof = jsEof.concat( jsEofInserts(yaml, jsClass) )
 
       js[0] = js[0].join('\n')
+
+
+
+
+      //// C#
+
+      //// Get the C# `class` name.
+      !function () {
+          for (i=0; null != (block = cs[i]); i++)
+              for (j=0; null != (line = block[j]); j++)
+                  if ( /^\s*class\s+[A-Z][A-Za-z]+\s*{/.test(line) ) return
+      }()
+      if (! line) throw Error('Cannot find C#’s `class` declaration')
+      csClass = line.match(/^\s*class\s+([A-Z][A-Za-z]+)\s*{/)[1]
+
+
+      //// Identify the block and line of the C#’s constructor.
+      rx = new RegExp( '^\\s*public\\s+' + csClass + '\\s*\\(' )
+      !function () {
+          for (i=0; null != (block = cs[i]); i++)
+              for (j=0; null != (line = block[j]); j++)
+                  if ( rx.test(line) ) return
+      }()
+      if (! line) throw Error('Cannot find C#’s `constructor()`')
+
+      //// Insert YAML-defined properties before the C# constructor.
+      cs[i] = csProperties(yaml).concat(cs[i])
+
+      //// Move the closing `}`s of the first C# block into `csEof`.
+      csEof = [] // end-of-file
+      while ( null != (line = cs[0].pop()) ) {
+          if ( /^[ \t}]*$/.test(line) )
+              csEof.unshift(line)
+          else {
+              cs[0].push(line)
+              break
+          }
+      }
+      cs[0] = cs[0].join('\n')
+
+
+
 
       for (i=0; null != (block = yaml[i]); i++) {
           yaml[i] = '    ' + block.join('\n    ')
@@ -203,12 +260,12 @@ $in.on('input', onInput)
       for (i=1; null != (block = js[i]); i++) {
           js[i] = '    ' + block.join('\n    ')
       }
-      for (i=0; null != (block = cs[i]); i++) {
-          cs[i] = '    ' + block.join('\n    ')
+      for (i=1; null != (block = cs[i]); i++) {
+          cs[i] = '        ' + block.join('\n        ')
       }
       return {
-          js:  js.join('\n') + '\n' + eof.join('\n')
-        , cs:  cs.join('\n')
+          js:  js.join('\n') + '\n' + jsEof.join('\n')
+        , cs:  cs.join('\n') + '\n' + csEof.join('\n')
         , doc: '@TODO: HTML-formatted documentation should go in here'
       }
   }
@@ -221,16 +278,39 @@ $in.on('input', onInput)
       var i, j, block, line, js, out = []
       for (i=0; null != (block = yaml[i]); i++)
           for (j=0; null != (line = block[j]); j++)
-              if ( js = singleConsInsert(line) ) out.push(js)
-      return '    ' + out.join('\n        ')
+              if ( js = singleConsInsert(line) ) out.push('    ' + js)
+      return out
   }
 
   function singleConsInsert (line) { // very rudimentry!
-      var match = line.match(/^\s*([_a-z][0-9a-z]+\s*):(\s*)(.*)(\s+#\s+.*)/i)
-      return match ? 'this.' + match[1] + match[2] + '= ' + match[3] : null
+      var p = parseYamlLine(line)
+      return !p || p.isStatic ? null : 'this.' + p.key + ' = ' + p.value
   }
 
-  function eofInserts (yaml, jsClass) {
+  function csProperties (yaml) {
+      var i, j, block, line, js, out = []
+      for (i=0; null != (block = yaml[i]); i++)
+          for (j=0; null != (line = block[j]); j++)
+              if ( cs = singleCsProperty(line) ) out.push(cs)
+      return out
+  }
+
+  function singleCsProperty (line) { // very rudimentry!
+      var p = parseYamlLine(line)
+      return !p ? null :
+          (p.isStatic   ? 'static ' : '')
+        + (p.isPrivate  ? 'private ' : 'public ')
+        + (p.isConstant ? 'readonly ' : '')
+        + p.type + ' '
+        + (p.isPrivate
+            ? '_' + p.key.charAt(1).toUpperCase() + p.key.slice(2)
+            :       p.key.charAt(0).toUpperCase() + p.key.slice(1)
+          )
+        + ' = '
+        + p.value + ';'
+  }
+
+  function jsEofInserts (yaml, jsClass) {
       var i, j, block, line, js, out = []
       for (i=0; null != (block = yaml[i]); i++)
           for (j=0; null != (line = block[j]); j++)
@@ -239,9 +319,48 @@ $in.on('input', onInput)
   }
 
   function singleEofInsert (line, jsClass) { // very rudimentry!
-      var match = line.match(/^\s*::([_a-z][0-9a-z]+\s*):(\s*)(.*)(\s+#\s+.*)/i)
-      return match ? jsClass + '.' + match[1] + match[2] + '= ' + match[3] : null
+      var p = parseYamlLine(line)
+      return !p || !p.isStatic ? null :
+          jsClass + '.' + p.key + ' = ' + p.value
   }
+
+  function parseYamlLine (line) {
+      var match = line.match(
+          new RegExp(
+              '^\\s*'             // ignore leading spaces
+            + '(::)?'              // capture the static-marker
+            + '([_a-z][0-9a-z]+)' // capture the key
+            + '\\s*:\\s*'         // ignore the colon
+            + '(!![a-z]+)'        // capture the (optional) YAML type
+            + '\\s*'              // ignore spaces
+            + '(.*)'              // capture the value
+            + '\\s+#\\s+.*'       // ignore the comment
+            , 'i'                 // case-insensitive
+          ))
+        , types = { //@TODO remove types which can’t work in C#
+              '!!null':      'null'      // null
+            , '!!bool':      'bool'      // boolean
+            , '!!int':       'int'       // number
+            , '!!float':     'float'     // number
+            , '!!binary':    'binary'    // buffer
+            , '!!timestamp': 'timestamp' // date
+            , '!!omap':      'omap'      // array of key-value pairs
+            , '!!pairs':     'pairs'     // array or array pairs
+            , '!!set':       'set'       // array of objects with given keys and null values
+            , '!!str':       'string'    // string
+            , '!!seq':       'seq'       // array
+            , '!!map':       'object'    // object
+          }
+      return ! match ? null : {
+          key:        match[2]
+        , type:       types[ match[3] ]
+        , value:      match[4].replace(/\s+$/, '')
+        , isStatic:   match[1]
+        , isConstant: /^[_A-Z]+$/.test(match[2])
+        , isPrivate:  '_' === match[2].charAt(0)
+      }
+  }
+
 
   function getBasicExample () {
       return `Defining Properties in OoDotMd
@@ -265,8 +384,8 @@ this.OONS.PropertiesExample = class {
 \`\`\`cs
 using System;
 namespace OONS {
-  class PropertiesExample {
-  }
+    class PropertiesExample {
+    }
 }
 \`\`\`
 
@@ -277,14 +396,14 @@ Naming conventions are taken seriously in OoDotMd! They differ slightly from
 
 \`\`\`yaml
 
-fullName: 'Jo Doe' # camel-case, lowercase-first (becomes \`FullName\` in C#)
-_isHappy: true     # underscore, so this is private (stays \`_isHappy\` in C#)
+fullName: !!str   "Jo Doe" # camel-case (becomes \`FullName\` in C#)
+_isHappy: !!bool  true     # underscore means private (stays \`_isHappy\` in C#)
 
-EYES:     'hazel'  # all uppercase, so this is a constant
-_AGE:     33       # underscore, a private constant
+EYES:     !!str   "hazel"  # all uppercase, so this is a constant
+_AGE:     !!int   33       # underscore, a private constant
 
-::city:   'Paris'  # double-colon for a static property
-::RATE:   12.0     # a static constant
+::city:   !!str   "Paris"  # double-colon for a static property
+::RATE:   !!float 12       # a static constant
 
 \`\`\`
 
@@ -295,15 +414,13 @@ JavaScript properties don’t need to be defined in the same block as the
 
 \`\`\`js
 constructor (config) {
-  console.log(this.fullName + ' is ' + this._AGE)
+    console.log(this.fullName + ' is ' + this._AGE)
 }
 \`\`\`
 
 \`\`\`cs
-public string Greeting;
-public Hello (string name) {
-  Greeting = "Hello " + name;
-  Console.WriteLine(Greeting);
+public PropertiesExample (object config) {
+    Console.WriteLine(FullName + " is " + _AGE);
 }
 \`\`\`
 
@@ -312,16 +429,16 @@ Finally, define the \`Main()\` method. This is a convention from C# which we car
 over into JavaScript. \`Main()\` can return a ‘status’ integer.
 
 \`\`\`js
-static Main (args) {
-  var propsExample = new OONS.PropertiesExample(args[0])
-  return 0
+static main (args) {
+    var propsExample = new OONS.PropertiesExample(args[0])
+    return 0
 }
 \`\`\`
 
 \`\`\`cs
 static int Main (string[] args) {
-  var hello = new OONS.Hello(args[0]);
-  return hello.Greeting.Length;
+    var propsExample = new OONS.PropertiesExample(args);
+    return 0;
 }
 \`\`\`
 

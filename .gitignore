@@ -1,0 +1,11 @@
+# Section 1: Temporary files
+.DS_Store
+Thumbs.db
+*.log
+.~lock*
+
+# Section 2: Local Config
+*_CONFIG.*
+
+# Section 3: Triggers an email from GitHub!
+*.exe
