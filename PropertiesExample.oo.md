@@ -26,20 +26,21 @@ namespace OONS {
 
 
 Naming conventions are taken seriously in OoDotMd! They differ slightly from
-[C# coding practice](http://www.dofactory.com/reference/csharp-coding-standards)
+[C# coding style](http://www.dofactory.com/reference/csharp-coding-standards).
 
 
 ```yaml
 
-fullName: 'Jo Doe' # camel-case, lowercase-first (becomes `FullName` in C#)
-_isHappy: true     # underscore, so this is private (stays `_isHappy` in C#)
+fullName: !!str   "Jo Doe" # camel-case (becomes `FullName` in C#)
+_isHappy: !!bool  true     # underscore means private (stays `_isHappy` in C#)
 
-EYES:     'hazel'  # all uppercase, so this is a constant
-_AGE:     33       # underscore, a private constant
+EYES:     !!str   "hazel"  # all uppercase, so this is a constant
+_AGE:     !!int   33       # underscore, a private constant
 
-::city:   'Paris'  # double-colon for a static property
-::RATE:   12.0     # a static constant
+::city:   !!str   "Paris"  # double-colon for a static property
+::RATE:   !!float 12       # a static constant
 
+defeatYamlHighlighterBugInAtom: 1
 ```
 
 
@@ -54,10 +55,8 @@ constructor (config) {
 ```
 
 ```cs
-public string Greeting;
-public Hello (string name) {
-    Greeting = "Hello " + name;
-    Console.WriteLine(Greeting);
+public PropertiesExample (object config) {
+    Console.WriteLine(FullName + " is " + _AGE);
 }
 ```
 
@@ -66,7 +65,7 @@ Finally, define the `Main()` method. This is a convention from C# which we carry
 over into JavaScript. `Main()` can return a ‘status’ integer.
 
 ```js
-static Main (args) {
+static main (args) {
     var propsExample = new OONS.PropertiesExample(args[0])
     return 0
 }
@@ -74,7 +73,7 @@ static Main (args) {
 
 ```cs
 static int Main (string[] args) {
-    var hello = new OONS.Hello(args[0]);
-    return hello.Greeting.Length;
+    var propsExample = new OONS.PropertiesExample(args);
+    return 0;
 }
 ```
