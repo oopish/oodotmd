@@ -1,18 +1,20 @@
-!function () {
+!function () { "use strict"
 
-//// Import the JavaScript+THREE analog of UnityEngine.
-const { GameObject, Vector3, PrimitiveType, Time } = window.UnityEngineAnalog
+const { Time } = window.UnityEngineAnalog
 const { Box } = window.OO
 
-////
+window.OO = window.OO || {} // the Oopish namespace
 window.OO.BoxDance = class {
-
+    constructor () {
+        this.box0 = null;
+        this.box1 = null;
+        this.box2 = null;
+    }
     Start () {
         this.box0 = new Box(1, 2, 3);
         this.box1 = new Box(3, 2, 1);
         this.box2 = new Box(0, 0, 0);
     }
-
     Update () {
         const
             t = Time.time // `Time.deltaTime` is also available
@@ -23,7 +25,6 @@ window.OO.BoxDance = class {
         this.box1.MoveAbsX( (T2%2 ? 2-t%2 : t%2) / 2 );
         this.box2.MoveAbsX( (T4%2 ? 4-t%4 : t%4) / 4 );
     }
-
 }
 
 }()
