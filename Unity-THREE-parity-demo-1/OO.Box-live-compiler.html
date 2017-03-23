@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Live Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="An Oopish language experiment">
+
+  <!-- Usage: `LERT("Some alert message here!")` -->
+  <script>!function(s){var A='addEventListener',L='LERT',S='setAttribute',t=top,
+  w=this,d=document,u=navigator.userAgent,n=0,p,i,c,e=function(m,f,l){if(l!=+l)l
+  =m.lineno,f=m.filename,m=m.message;for(i=0,c=w;c=c[['LIFE','pop','is','ready']
+  [i++]];);(4<i&&w.LIFE.pop.warn||t[L])((f+':'+l).match(/[^\/]+?\/?[^\/]+$/)[0]+
+  '\n'+m)};/efox\/(\d|[1-2]\d)\.|Prest/.test(u)?w.onerror=e:!/SIE 9/.test(u)&&w[
+  A]?w[A]('error',e,0):w.attachEvent('onerror',e);w[L]=t[L]=t[L]||function(h){h=
+  98<++n?'99!':n+' '+h;99<n?0:d.body?(p=d.createElement('TT'),p.innerHTML=h,(p.
+  style[S]?p.style[S]('cssText',s):p[S]('style',s)),p.onclick=function(){d.body.
+  removeChild(this)},d.body.appendChild(p)):alert(h)}}('position:fixed!importa'+
+  'nt;position:absolute;display:block;top:40%;left:5%;width:90%;font-size:14px'+
+  ';padding:9px;margin-left:-9px;background:tan;color:#603;z-index:99')</script>
+
+  <script src="../jquery-3.1.1.min.js"></script>
+
+  <style type="text/css">
+     html {
+         font-size: 62.5%;
+     }
+     body {
+         font-size: 1.5em;
+     }
+     h4 {
+         margin: 0;
+     }
+     pre {
+         padding: 1em;
+         margin-top: 0;
+         color: #ccc;
+         overflow: scroll;
+     }
+  </style>
+
+</head>
+<body style="font-family:Arial, sans-serif; background:#ccc; color:#333">
+
+  <!-- Dropdown menu to select JavaScript format -->
+  <select id="ecmaswitch" style="float:right" onchange="document.cookie=
+    'ecmaswitch='+this.options[this.selectedIndex].value;location.reload()">
+    <option value="~0~">ES5 Production</option><!-- default -->
+    <option value="~1~">ES5 Minified</option>
+    <option value="~2~">ES6 Production</option>
+    <option value="~3~">ES6 Development</option>
+  </select><script>!function(d,f,e){if(e=d.getElementById('ecmaswitch'))f=~~
+    d.cookie.split('~')[1],e.options[f].selected=!0}(document)</script>
+
+  <!-- Header and Navigation menu -->
+  <h1 style="display:inline">OoDotMd
+    <span id="version">0.0.*</span> <span id="format"></span>&nbsp;</h1>
+  <div style="float:right">
+    <span id="home">Home</span> &nbsp;
+    <a href="support/index.html">Support</a> &nbsp;
+    <a href="support/test.html">Test</a> &nbsp;
+    <a href="https://github.com/oopish/oodotmd">GitHub</a> &nbsp;&nbsp;
+  </div>
+
+  <h2 style="margin-top:0.2em">Live Demo</h2>
+
+  <div id="oodotmd-in"
+       style="width:48%; float:left;">
+      <h4>OoDotMd in<span id="src"></span></h4>
+      <pre style="height:60em; background:#333"
+           contenteditable="true"
+      >Start typing oo.md here</pre>
+  </div>
+  <div id="js-out"
+       style="width:48%; float:right;">
+      <h4>JavaScript out &nbsp; <a href="index.html">Demo</a></h4>
+      <pre style="height:23em; background:#334"
+      >Parsing, please wait...</pre>
+  </div>
+  <div id="cs-out"
+       style="width:48%; float:right;">
+      <h4>C# out</h4>
+      <pre style="height:23em; background:#344"
+      >Parsing, please wait...</pre>
+  </div>
+  <div id="doc-out"
+       style="width:48%; float:right;">
+      <h4>Documentation out</h4>
+      <pre style="height:5em; background:#eee; color:#333"
+      >Parsing, please wait...</pre>
+  </div>
+  <!-- <link id="import" rel="import" src="Hello.oo.md"> -->
+
+
+
+  <script>!function () {
+
+//// Handy jQuery refs.
+var
+    $in  = $('#oodotmd-in pre')
+  , $js  = $('#js-out pre')
+  , $cs  = $('#cs-out pre')
+  , $doc = $('#doc-out pre')
+
+//// Define a function which runs the OoDotMd input element through the parser.
+var onInput = () => {
+    var parsed = parseOoDotMd( $in.text() )
+    $js.text(parsed.js)
+    $cs.text(parsed.cs)
+    $doc.text(parsed.doc)
+}
+
+//// Select-all when output <PRE>s are clicked.
+$js.click( () => selectElementText($js[0]) )
+$cs.click( () => selectElementText($cs[0]) )
+
+//// Load a basic example into the OoDotMd input element.
+$in.text( getBasicExample() )
+onInput()
+
+//// Listen for changes to the OoDotMd input element.
+$in.on('input', onInput)
+
+
+  //// Retrieves YAML, JavaScript and C# code blocks from an ‘oo.md’ file.
+  function parseOoDotMd (text) {
+
+      ////
+      var lines = text.split('\n')
+        , yaml = []
+        , js = []
+        , cs = []
+        , block = false
+        , i=0, j, line, block, jsEof, csEof, rx
+
+      //// Fill the `yaml`, `js` and `cs` arrays with blocks of code.
+      while ( null != (line = lines[i++]) ) {
+          line = line.replace(/\s*$/,'') // trim whitespace from end of line
+               if (  block && '```'     === line) block = false
+          else if (! block && '```yaml' === line) block = yaml, block.push([])
+          else if (! block && '```js'   === line) block = js  , block.push([])
+          else if (! block && '```cs'   === line) block = cs  , block.push([])
+          else if (block) block[block.length-1].push(line)
+      }
+
+
+
+
+      //// JAVASCRIPT
+
+      //// Get the JavaScipt `class` name.
+      !function () {
+          for (i=0; null != (block = js[i]); i++)
+              for (j=0; null != (line = block[j]); j++)
+                  if ( /^\s*[.a-z]+\s*=\s*class\s*{/i.test(line) ) return
+      }()
+      if (! line) throw Error('Cannot find JavaScript’s `class` declaration')
+      jsClass = line.match(/^\s*([.a-z]+)\s*=\s*class\s*{/i)[1]
+
+
+      //// Identify the block and line of the JavaScipt’s `constructor()`.
+      !function () {
+          for (i=0; null != (block = js[i]); i++)
+              for (j=0; null != (line = block[j]); j++)
+                  if ( /constructor\s*\([^\)]*\)\s*{/.test(line) ) return
+      }()
+      if (! line) throw Error('Cannot find JavaScript’s `constructor()`')
+
+      //// Insert YAML-defined properties into the JavaScript `constructor()`.
+      js[i] = js[i].slice(0,j+1).concat( consInserts(yaml), js[i].slice(j+1 ) )
+
+      //// Move the closing `}`s of the first JavaScript block into `jsEof`.
+      jsEof = [] // end-of-file
+      while ( null != (line = js[0].pop()) ) {
+          if ( /^[ \t}]*$/.test(line) )
+              jsEof.unshift(line)
+          else {
+              js[0].push(line)
+              break
+          }
+      }
+      jsEof = jsEof.concat( jsEofInserts(yaml, jsClass), '}()' )
+
+      js[0] = '!function () { "use strict"\n\n' + js[0].join('\n')
+
+
+
+
+      //// C#
+
+      //// Get the C# `class` name.
+      !function () {
+          for (i=0; null != (block = cs[i]); i++)
+              for (j=0; null != (line = block[j]); j++)
+                  if ( /^\s*(public\s*)?class\s+[A-Z][A-Za-z]+\s*{/.test(line) ) return
+      }()
+      if (! line) throw Error('Cannot find C#’s `class` declaration')
+      csClass = line.match(/^\s*(public\s*)?class\s+([A-Z][A-Za-z]+)\s*{/)[2]
+
+
+      //// Identify the block and line of the C#’s constructor.
+      rx = new RegExp( '^\\s*public\\s+' + csClass + '\\s*\\(' )
+      !function () {
+          for (i=0; null != (block = cs[i]); i++)
+              for (j=0; null != (line = block[j]); j++)
+                  if ( rx.test(line) ) return
+      }()
+      if (! line) throw Error('Cannot find C#’s `constructor()`')
+
+      //// Insert YAML-defined properties before the C# constructor.
+      cs[i] = csProperties(yaml).concat(cs[i])
+
+      //// Move the closing `}`s of the first C# block into `csEof`.
+      csEof = [] // end-of-file
+      while ( null != (line = cs[0].pop()) ) {
+          if ( /^[ \t}]*$/.test(line) )
+              csEof.unshift(line)
+          else {
+              cs[0].push(line)
+              break
+          }
+      }
+      cs[0] = cs[0].join('\n')
+
+
+
+
+      for (i=0; null != (block = yaml[i]); i++) {
+          yaml[i] = '    ' + block.join('\n    ')
+      }
+      for (i=1; null != (block = js[i]); i++) {
+          js[i] = '    ' + block.join('\n    ')
+      }
+      for (i=1; null != (block = cs[i]); i++) {
+          cs[i] = '        ' + block.join('\n        ')
+      }
+      return {
+          js:  js.join('\n') + '\n' + jsEof.join('\n')
+        , cs:  cs.join('\n') + '\n' + csEof.join('\n')
+        , doc: '@TODO: HTML-formatted documentation should go in here'
+      }
+  }
+
+
+
+  //// UTILITY
+
+  function consInserts (yaml) {
+      var i, j, block, line, js, out = []
+      for (i=0; null != (block = yaml[i]); i++)
+          for (j=0; null != (line = block[j]); j++)
+              if ( js = singleConsInsert(line) ) out.push('    ' + js)
+      return out
+  }
+
+  function singleConsInsert (line) { // very rudimentry!
+      var p = parseYamlLine(line)
+      return !p || p.isStatic ? null : 'this.' + p.key + ' = '
+         + ('' === p.value ? 'null' : p.value) + ';'
+  }
+
+  function csProperties (yaml) {
+      var i, j, block, line, js, out = []
+      for (i=0; null != (block = yaml[i]); i++)
+          for (j=0; null != (line = block[j]); j++)
+              if ( cs = singleCsProperty(line) ) out.push(cs)
+      return out
+  }
+
+  function singleCsProperty (line) { // very rudimentry!
+      var p = parseYamlLine(line)
+      return !p ? null :
+          (p.isStatic   ? 'static ' : '')
+        + (p.isPrivate  ? 'private ' : 'public ')
+        + (p.isConstant ? 'readonly ' : '')
+        + p.type + ' '
+        + (p.isPrivate
+            ? '_' + p.key//.charAt(1).toUpperCase() + p.key.slice(2)
+            :       p.key//.charAt(0).toUpperCase() + p.key.slice(1)
+          )
+        + ('' === p.value ? '' : ' = ' + p.value)
+        + ';'
+  }
+
+  function jsEofInserts (yaml, jsClass) {
+      var i, j, block, line, js, out = []
+      for (i=0; null != (block = yaml[i]); i++)
+          for (j=0; null != (line = block[j]); j++)
+              if ( js = singleEofInsert(line, jsClass) ) out.push(js)
+      return out.join('\n')
+  }
+
+  function singleEofInsert (line, jsClass) { // very rudimentry!
+      var p = parseYamlLine(line)
+      return !p || !p.isStatic ? null :
+          jsClass + '.' + p.key + ' = ' + p.value
+  }
+
+  function parseYamlLine (line) {
+      var match = line.match(
+          new RegExp(
+              '^\\s*'             // ignore leading spaces
+            + '(::)?'             // capture the static-marker
+            + '([_a-z][0-9a-z]*)' // capture the key
+            + '\\s*:\\s*'         // ignore the colon
+            + '(!![a-z]+)'        // capture the (optional) YAML type
+            + '\\s*'              // ignore spaces
+            + '(.*)'              // capture the value
+            + '\\s+#\\s+.*'       // ignore the comment
+            , 'i'                 // case-insensitive
+          ))
+        , types = { //@TODO remove types which can’t work in C#
+              '!!null':      'null'      // null
+            , '!!bool':      'bool'      // boolean
+            , '!!int':       'int'       // number
+            , '!!float':     'float'     // number
+            , '!!binary':    'binary'    // buffer
+            , '!!timestamp': 'timestamp' // date
+            , '!!omap':      'omap'      // array of key-value pairs
+            , '!!pairs':     'pairs'     // array or array pairs
+            , '!!set':       'set'       // array of objects with given keys and null values
+            , '!!str':       'string'    // string
+            , '!!seq':       'seq'       // array
+            , '!!map':       'object'    // object
+          }
+              console.log(match, line);
+        //   if (! match)
+        //       console.log(match, line);
+        //   else
+        //       console.log(match[4].replace(/\s+$/, ''));
+      return ! match ? null : {
+          key:        match[2]
+        , type:       types[ match[3] ] || match[3].slice(2)
+        , value:      match[4].replace(/\s+$/, '')
+        , isStatic:   match[1]
+        , isConstant: /^[_A-Z]+$/.test(match[2])
+        , isPrivate:  '_' === match[2].charAt(0)
+      }
+  }
+
+  function selectElementText(el, win) {
+      win = win || window;
+      var doc = win.document, sel, range;
+      if (win.getSelection && doc.createRange) {
+          sel = win.getSelection();
+          range = doc.createRange();
+          range.selectNodeContents(el);
+          sel.removeAllRanges();
+          sel.addRange(range);
+      } else if (doc.body.createTextRange) {
+          range = doc.body.createTextRange();
+          range.moveToElementText(el);
+          range.select();
+      }
+  }
+
+
+  function getBasicExample () {
+      return `A Simple Box Example
+====================
+
+__This is an example of ‘middleware’, sitting between the underlying 3D library
+(Unity or THREE.js) and the application code (‘BoxDance’, in this case).__
+
+
+The first code-blocks do three things:
+
+1. Import dependencies
+2. Declare \`OO\` (the Oopish namespace)
+3. Begin this file’s class (every \`oo.md\` file defines one class)
+
+\`\`\`js
+const { GameObject, Vector3, PrimitiveType } = window.UnityEngineAnalog
+
+window.OO = window.OO || {} // the Oopish namespace
+window.OO.Box = class {
+}
+\`\`\`
+
+\`\`\`cs
+using System.Collections;
+using UnityEngine;
+namespace OO {
+    public class Box {
+    }
+}
+\`\`\`
+
+
+The second code blocks define the class-constructor.
+
+\`\`\`js
+constructor (absX, absY, absZ) {
+    this.x = absX;
+    this.y = absY;
+    this.z = absZ;
+    this.el = GameObject.CreatePrimitive(PrimitiveType.Cube);
+    this.el.transform.position = new Vector3(this.x, this.y, this.z);
+}
+\`\`\`
+
+\`\`\`cs
+public Box (float absX, float absY, float absZ) {
+    x = absX;
+    y = absY;
+    z = absZ;
+    el = GameObject.CreatePrimitive(PrimitiveType.Cube);
+    el.transform.position = new Vector3(x, y, z);
+}
+\`\`\`
+
+
+The \`MoveAbsX()\` method lets you change the Box’s absolute x-position.
+
+\`\`\`js
+MoveAbsX (absX) {
+    this.x = absX;
+    this.el.transform.position = new Vector3(this.x, this.y, this.z);
+}
+\`\`\`
+
+\`\`\`cs
+public void MoveAbsX (float absX) {
+    x = absX;
+    el.transform.position = new Vector3(x, y, z);
+}
+\`\`\`
+
+
+The final code-block defines the class’s public and private properties. Naming
+conventions are taken seriously in \`oo.md\` files! They differ slightly from
+[C# coding style](http://www.dofactory.com/reference/csharp-coding-standards).
+Note that properties are always inserted at the start of the compiled classes.
+
+\`\`\`yaml
+
+el: !!GameObject     # reference to the Primitive (unity) or mesh (THREE)
+x:  !!float       0  # the Box’s x-position
+y:  !!float       0  # the Box’s y-position
+z:  !!float       0  # the Box’s z-position
+
+\`\`\`
+`
+  }
+
+  }()</script>
+
+</body>
+</html>
