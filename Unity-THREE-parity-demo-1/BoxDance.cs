@@ -8,7 +8,7 @@ public class BoxDance : MonoBehaviour {
     public BoxDance () {
     }
     void Start () {
-        box0 = new Box(1, 2, 3);
+        box0 = new Box(1, 4, 3);
         box1 = new Box(3, 2, 1);
         box2 = new Box(0, 0, 0);
     }

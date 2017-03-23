@@ -11,7 +11,7 @@ window.OO.BoxDance = class {
         this.box2 = null;
     }
     Start () {
-        this.box0 = new Box(1, 2, 3);
+        this.box0 = new Box(1, 4, 3);
         this.box1 = new Box(3, 2, 1);
         this.box2 = new Box(0, 0, 0);
     }
